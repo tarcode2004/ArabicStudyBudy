@@ -155,8 +155,10 @@ const App: React.FC = () => {
         borderRadius: '10px', // Curved corners
         boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)', // Optional: adds a subtle shadow
       }}>
-        <p>Current Arabic: <p style={{ fontSize: '30px' }}>{generatedSentence.arabic}</p></p>
-        <p>Current English: {generatedSentence.english}</p>
+        <p>Current Arabic: </p>
+        <p style={{ fontSize: '30px' }}>{generatedSentence.arabic}</p>
+        <p>Current English: </p>
+        <p>{generatedSentence.english}</p>
       </div>
       <div>
         <button id="playButton" onClick={() => play()} style={buttonStyle}>Play</button>
