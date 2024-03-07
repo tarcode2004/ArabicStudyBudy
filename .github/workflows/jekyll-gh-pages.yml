@@ -29,11 +29,6 @@ jobs:
             echo "::set-output name=command::install"
             echo "::set-output name=runner::pnpx --no-install"
             exit 0
-          elif [ -f "${{ github.workspace }}/yarn.lock" ]; then
-            echo "::set-output name=manager::yarn"
-            echo "::set-output name=command::install"
-            echo "::set-output name=runner::yarn"
-            exit 0
           elif [ -f "${{ github.workspace }}/package-lock.json" ]; then
             echo "::set-output name=manager::npm"
             echo "::set-output name=command::ci"
@@ -47,10 +42,6 @@ jobs:
       - name: Install pnpm
         if: steps.detect-package-manager.outputs.manager == 'pnpm'
         run: npm install -g pnpm
-
-      - name: Install yarn
-        if: steps.detect-package-manager.outputs.manager == 'yarn'
-        run: npm install -g yarn
 
       - name: Setup Node
         uses: actions/setup-node@v3
