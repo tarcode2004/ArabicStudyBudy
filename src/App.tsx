@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import LinearDragScale from './linearDragScale';
 
 const App: React.FC = () => {
     const [apiKey, setApiKey] = useState<string | null>(null);
     const [playing, setPlaying] = useState<boolean>(false);
     const [firstCall, setFirstCall] = useState<boolean>(true);
+    const [scaleValue, setScaleValue] = useState(5);
     const [generatedSentence, setGeneratedSentence] = useState<{arabic: string, english: string}>({ arabic: '', english: ''}); 
     const synth = window.speechSynthesis;
     const string = "father,أب;to believe in,آمن ب;it appears, seems that,يبدو ان;until; in order to,حتى;party,حفلة;neighborhood,حي;to invite,دعا;invitation (card),بطاقة دعوة;trip, flight,رحلة;meal eaten before dawn during Ramadan,السحور;TV series,مسلسل;sky, heavens,السماء;to supervise,أشرف على;to fast,صام;wedding,عرس;capital,عاصمة;I believe that,أعتقد أن;institute,معهد;happiness,فرح;happy occasion,أَفراح;to do (something),فعل;holy,مقدس;nervousness, anxiety,قلق;to get up,قام;enough,كاف;star,نجم;to put, place (something),وضع;rest, remainder of,بقية;to meet, gather (with),اجتمع ب/مع;meeting,اجتماع;to bring,جاء ب;location, place,محل;local,محلّيّ;to have a disagreement, dispute with,اختلف مع;to differ from,اختلف عن;oriental, Middle Eastern,شرقي;to be/become (pre)occupied with,انشغل ب;to watch,شاهد;cook, chef,طباخ;flavor,طعم;to get used to, accustomed to,اعتاد على;to break one's fast, especially in Ramadan: to have breakfast,افطر;cafe,مقهى;boredom,الملل;meal,وجبة;to undertake, assume (a task or position),تولى;at all,أبداً;certain, sure (of/that),مُتَأَكِّد من/أنّ;mail, post,بريد;belly, stomach,بطن;heavy,ثقيل;part of,جزء;body,جسم;to try to, attempt,حاول;drugs,مخدرات;light,خفيف;morals,أخلاق;to be afraid for (someone),خاف على;to be afraid of,خاف من;afraid,خائف;blood,دم;without,بدون;smart, intelligent,ذكي;perhaps, maybe,ربما;time, times (abstract),زمن;hair,شعر;upset, bothered (by),متضايق;to consider (someone or something) to be,اعتبر;to leave (a place),غادر;heart,قلب;to hint (to someone) that,لمح (الى) ان;to discuss (something),ناقش;to discuss with (someone),تناقش مع;important,مهم;most/more important,أهم;to trust, have confidence in,وثق;trust, confidence,ثقة;trusting, confident in,واثق;face,وجه;hand,يد;polite, well-mannered,مُؤَدَّب;outside,خارج;especially since,خصوصاً وأنّ;different from,مختلف عن;head,رأس;leg,رجل;to welcome,رحب ب;to focus, concentrate on,ركز على;youth (stage of life),الشباب;to occupy, preoccupy,شغل;to praise (a person),شُكراً;form, shape, you look...,شكل;friendship,صداقة;(he) has always...,طوال;to get (someone) accustomed to,عود (على) ان;to open,فتح;superior,متفوق;thousand,الف;environment,بيئة;passport,جواز سفر;to respect,اِحتَرَمَ;to carry,حمل;to need,احتاج الى;a need,حاجة;in need of,بحاجة الى;to push, to pay,دفع;motive,دافع;the world, this world,الدنيا;behavior,سلوك;to act, behave,تصرف;action,تصرف;necessary,ضروري;injustice,ظلم;to give,أعطى;rich,غني;pride,فخر;proud of,فخور;poor,فقير;to mean, intend,قصد;dignity,كرامة;to grow up; arise,نشا;(piece of advise),نصيحة;gift, present,هدية;homeland,وطن;citizen,مواطن;to stop,توقف;"
@@ -21,8 +23,8 @@ const App: React.FC = () => {
     }, []);
 
     useEffect(() => {
-      if (playing) {
-          generateAndSpeak();
+      if (playing === true) {
+        generateAndSpeak();
       }
       // Cleanup function to stop the speech when component unmounts or playing stops
       return () => {
@@ -32,22 +34,25 @@ const App: React.FC = () => {
       };
     }, [playing]);
 
-    const play = async() => {
-      await setPlaying(true);
-      console.log(playing);
+    const play = () => {
+      setPlaying(true);
+      console.log(playing === true);
     }
 
-    const stop = async () => {
-      await setPlaying(false);
-      await setFirstCall(true);
-      console.log(playing);
+    const stop = () => {
+      setPlaying(false);
+      if (synth.speaking) {
+        synth.cancel();
+      }
+      setFirstCall(true);
+      console.log(playing === true);
     }
 
     const generateAndSpeak = async () => {
-      while (playing === true) {
       if (!apiKey) return;
+      while(playing === true){
   
-      let promptText = firstCall?
+      const promptText = firstCall?
        `Generate a sentence in arabic using the following words, you may use other arabic words. They should be sentences someone would use in daily life. Only return an arabic sentence and english translation. Don't say anything else. It should be in the follwing format: {"arabic": "", "english": ""} with the following words ${array[Math.floor(Math.random() * array.length)]} and ${array[Math.floor(Math.random() * array.length)]}.` :
        `Generate another in the same format without any comentary with the words ${array[Math.floor(Math.random() * array.length)]} and ${array[Math.floor(Math.random() * array.length)]}.`
   
@@ -74,31 +79,7 @@ const App: React.FC = () => {
         }
         catch (error) {
           console.error('Error:', error);
-          promptText = `Regenerate in the follwing format, do not make any comentary: {"arabic": "", "english": ""}`
-          try {
-            response = await axios.post('https://api.openai.com/v1/chat/completions', {
-                model: "gpt-3.5-turbo",
-                messages: [
-                    {
-                        role: "system",
-                        content: "You are a helpful assistant."
-                    },
-                    {
-                        role: "user",
-                        content: promptText
-                    }
-                ],
-            }, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`
-                }
-            });
-          }
-          catch (error) {
-            console.error('Error:', error);
-            return;
-          }
+          return;
         }
   
       const data = response.data;
@@ -112,7 +93,7 @@ const App: React.FC = () => {
 
       // After the first call, set firstCall to false
       if (firstCall) setFirstCall(false);
-      await waitThreeSeconds(5);
+      await waitThreeSeconds(scaleValue);
       }
   }; //End of generateAndSpeak
 
@@ -124,7 +105,6 @@ const App: React.FC = () => {
         utterance.onend = () => resolve();
         speechSynthesis.speak(utterance);
     });
-
   };
 
   // Style for the buttons, to keep consistency and avoid repetition
@@ -163,6 +143,7 @@ const App: React.FC = () => {
       <div>
         <button id="playButton" onClick={() => play()} style={buttonStyle}>Play</button>
         <button id="pauseButton" onClick={() => stop()} style={buttonStyle}>Pause</button>
+        <LinearDragScale value={scaleValue} setValue={setScaleValue} />
       </div>
     </div>
   );
